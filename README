@@ -1,0 +1,11 @@
+codeforces-scraper aims to take away some of the boilerplate in competing in
+Codeforces (http://codeforces.com/) programming contests.  In particular, it:
+
+(1) Loads the contest page, sees how many problems there are.
+
+(2) Creates a directory structure for the problems (a/ b/ c/ d/ e/) and
+    optionally copies a template code file to each directory for you to start
+    working on.
+
+(3) Loads each problem, parses the example inputs and outputs and saves them
+    locally.
