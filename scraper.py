@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse, html.parser, os, re, sys, urllib.parse, urllib.request
 
@@ -115,11 +115,16 @@ for problem in problems:
     problem_html = urllib.request.urlopen(problem_uri).read().decode('utf-8')
     print('OK ({} bytes).'.format(len(problem_html)))
 
-    # Hack for codeforces HTML error
+    # Hack for codeforces HTML errors
     problem_html = problem_html.replace('<p</p>', '<p></p>')
+    problem_html = problem_html.replace('<ul</ul>', '<ul></ul>')
     
     parser = ProblemHTMLParser()
-    parser.feed(problem_html)
+    try:
+        parser.feed(problem_html)
+    except:
+        print(problem_html, file=sys.stderr)
+        raise
 
     examples = parser.getExamples()
 
