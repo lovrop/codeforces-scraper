@@ -118,6 +118,7 @@ for problem in problems:
     # Hack for codeforces HTML errors
     problem_html = problem_html.replace('<p</p>', '<p></p>')
     problem_html = problem_html.replace('<ul</ul>', '<ul></ul>')
+    problem_html = problem_html.replace('<div class="sample-test"<', '<div class="sample-test"><')
     
     parser = ProblemHTMLParser()
     try:
