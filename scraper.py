@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 
-import argparse, html.parser, os, re, sys, urllib.parse, urllib.request
+import argparse
+import concurrent.futures
+import html.entities
+import html.parser
+import os
+import re
+import sys
+import urllib.parse
+import urllib.request
 
-parser = argparse.ArgumentParser(description='Codeforces scraper.  https://github.com/lovrop/codeforces-scraper')
-parser.add_argument('contest', help='URI or numerical ID of contest to scrape')
-args = parser.parse_args()
-
-# See if it was just a numeric ID
-try:
-    contest_id = int(args.contest)
-    contest_uri = 'http://codeforces.com/contest/{}'.format(contest_id)
-except ValueError:
-    contest_uri = args.contest
-
-print('Retrieving ', contest_uri, '... ', sep='', end='')
-sys.stdout.flush()
-contest_html = urllib.request.urlopen(contest_uri).read().decode('utf-8')
-print('OK ({} bytes).'.format(len(contest_html)))
 
 class ContestHTMLParser(html.parser.HTMLParser):
     def __init__(self, *args, **kwargs):
@@ -40,6 +33,7 @@ class ContestHTMLParser(html.parser.HTMLParser):
 
     def getProblems(self):
         return sorted(list(self.problems))
+
 
 class ProblemHTMLParser(html.parser.HTMLParser):
     class Node:
@@ -113,18 +107,13 @@ class ProblemHTMLParser(html.parser.HTMLParser):
             examples.append((pre_datas[i], pre_datas[i+1]))
         return examples
 
-parser = ContestHTMLParser()
-parser.feed(contest_html)
-problems = parser.getProblems()
 
-print('Found', len(problems), 'problems.')
-
-for problem in problems:
+def download_problem(contest_uri, problem):
     problem_uri = contest_uri + '/problem/' + problem
-    print('Retrieving ', problem_uri, '... ', sep='', end='')
+    print('Retrieving', problem_uri, '...')
     sys.stdout.flush()
     problem_html = urllib.request.urlopen(problem_uri).read().decode('utf-8')
-    print('OK ({} bytes).'.format(len(problem_html)))
+    print('Retrieved problem {} ({} bytes).'.format(problem, len(problem_html)))
 
     # Hack for codeforces HTML errors
     problem_html = problem_html.replace('<p</p>', '<p></p>')
@@ -154,3 +143,30 @@ for problem in problems:
             f.write(example[1])
 
     print('Wrote {} examples for problem {}.'.format(len(examples), problem))
+
+
+parser = argparse.ArgumentParser(description='Codeforces scraper.  https://github.com/lovrop/codeforces-scraper')
+parser.add_argument('contest', help='URI or numerical ID of contest to scrape')
+args = parser.parse_args()
+
+# See if it was just a numeric ID
+try:
+    contest_id = int(args.contest)
+    contest_uri = 'http://codeforces.com/contest/{}'.format(contest_id)
+except ValueError:
+    contest_uri = args.contest
+
+print('Retrieving ', contest_uri, '... ', sep='', end='')
+sys.stdout.flush()
+contest_html = urllib.request.urlopen(contest_uri).read().decode('utf-8')
+print('OK ({} bytes).'.format(len(contest_html)))
+
+parser = ContestHTMLParser()
+parser.feed(contest_html)
+problems = parser.getProblems()
+
+print('Found', len(problems), 'problems.')
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    for problem in problems:
+        executor.submit(download_problem, contest_uri, problem)
