@@ -23,11 +23,11 @@ class ContestHTMLParser(html.parser.HTMLParser):
         super().__init__(*args, **kwargs)
         self.problems = set()
         self.re = re.compile('contest/\d+/problem/(\w+)')
-    
+
     def handle_starttag(self, tag, attrs):
         if tag != 'a':
             return
-        
+
         href = dict(attrs).get('href')
         if not href:
             return
@@ -79,6 +79,17 @@ class ProblemHTMLParser(html.parser.HTMLParser):
         if self.recording:
             self.stack[-1].data += data
 
+    def handle_entityref(self, name):
+        code = html.entities.name2codepoint.get(name)
+        assert code is not None, 'Unrecognized HTML entity &{};'.format(name)
+        self.handle_data(chr(code))
+
+    def handle_charref(self, name):
+        if name[0] == 'x':
+            self.handle_data(chr(int(name[1:], 16)))
+        else:
+            self.handle_data(chr(int(name)))
+
     def walkNodes(self, node, output_pre_datas):
         if node.tag == 'pre':
             output_pre_datas.append(node.data)
@@ -119,7 +130,7 @@ for problem in problems:
     problem_html = problem_html.replace('<p</p>', '<p></p>')
     problem_html = problem_html.replace('<ul</ul>', '<ul></ul>')
     problem_html = problem_html.replace('<div class="sample-test"<', '<div class="sample-test"><')
-    
+
     parser = ProblemHTMLParser()
     try:
         parser.feed(problem_html)
