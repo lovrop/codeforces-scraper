@@ -134,11 +134,11 @@ def download_problem(contest_uri, problem):
         os.mkdir(problem_dir)
 
     for i, example in enumerate(examples, 1):
-        input_path = os.path.join(problem_dir, 'in{}'.format(i))
+        input_path = os.path.join(problem_dir, '{}.in.{}'.format(problem.lower(), i))
         with open(input_path, 'w') as f:
             f.write(example[0])
 
-        output_path = os.path.join(problem_dir, 'out{}'.format(i))
+        output_path = os.path.join(problem_dir, '{}.out.{}'.format(problem.lower(), i))
         with open(output_path, 'w') as f:
             f.write(example[1])
 
